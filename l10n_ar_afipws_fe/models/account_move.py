@@ -80,7 +80,8 @@ class AccountMove(models.Model):
     @api.depends('journal_id', 'afip_auth_code')
     def _compute_validation_type(self):
         for rec in self:
-            if rec.journal_id.afip_ws and not rec.afip_auth_code:
+            if rec.journal_id.afip_ws and \
+                    (not rec.afip_auth_code or (rec.afip_auth_code and rec.afip_auth_mode == 'CAEA')):
                 validation_type = self.env['res.company']._get_environment_type()
                 # if we are on homologation env and we dont have certificates
                 # we validate only locally
@@ -133,7 +134,7 @@ class AccountMove(models.Model):
         "Request to AFIP the invoices' Authorization Electronic Code (CAE)"
         for inv in self:
             # Ignore invoices with cae (do not check date)
-            if inv.afip_auth_code:
+            if inv.afip_auth_code and inv.afip_auth_mode != 'CAEA':
                 continue
 
             afip_ws = inv.journal_id.afip_ws
@@ -206,11 +207,7 @@ class AccountMove(models.Model):
             mipyme_fce = int(doc_afip_code) in [201, 206, 211]
             # due date only for concept "services" and mipyme_fce
             if int(concepto) != 1 and int(doc_afip_code) not in [202, 203, 207, 208, 212, 213] or mipyme_fce:
-                if len(inv.invoice_payment_term_id):
-                    terms = inv.invoice_payment_term_id.compute(inv.amount_total, inv.invoice_datem, inv.currency_id)
-                    fecha_venc_pago = terms[-1][0]
-                else:
-                    fecha_venc_pago = inv.invoice_date_due or inv.invoice_date
+                fecha_venc_pago = inv.invoice_date_due or inv.invoice_date
                 if afip_ws != 'wsmtxca':
                     fecha_venc_pago = fecha_venc_pago.strftime('%Y%m%d')
             else:
@@ -251,13 +248,18 @@ class AccountMove(models.Model):
 
             # create the invoice internally in the helper
             if afip_ws == 'wsfe':
+                if inv.afip_auth_mode == 'CAEA' and inv.afip_auth_code:
+                    caea = inv.afip_auth_code
+                else:
+                    caea = False
+
                 ws.CrearFactura(
                     concepto, tipo_doc, nro_doc, doc_afip_code, pos_number,
                     cbt_desde, cbt_hasta, imp_total, imp_tot_conc, imp_neto,
                     imp_iva,
                     imp_trib, imp_op_ex, fecha_cbte, fecha_venc_pago,
                     fecha_serv_desde, fecha_serv_hasta,
-                    moneda_id, moneda_ctz
+                    moneda_id, moneda_ctz, caea
                 )
             # elif afip_ws == 'wsmtxca':
             #     obs_generales = inv.comment
