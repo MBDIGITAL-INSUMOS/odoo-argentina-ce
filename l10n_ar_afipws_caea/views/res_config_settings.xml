@@ -12,8 +12,14 @@
                         <div class="o_setting_left_pane"/>
                         <div class="o_setting_right_pane">
                             <span class="o_form_label">CAEA</span>
-                            <div class="text-muted">Configure AFIP CAEA state
+                            <div class="text-muted">AFIP CAEA state
                                     </div>
+                            <div class="mt8">
+                                
+                                <button style="background:#FF0000;color:#FFF;   " attrs="{'invisible':[('afip_ws_caea_state','!=','inactive')]}" name="afip_red_button" string="Active CAEA" type="object"/>
+                                <button class="btn-link" icon="fa-arrow-right" name="%(l10n_ar_afipws_caea.action_caea)d" string="List CAEA" type="action"/>
+                            </div>
+
                             <div class="mt8">
                                 <label for="afip_ws_caea_state"/>
                                 <field class="font-weight-bold" name="afip_ws_caea_state"/>

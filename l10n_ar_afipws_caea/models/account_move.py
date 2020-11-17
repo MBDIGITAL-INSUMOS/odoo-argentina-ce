@@ -8,6 +8,11 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    caea_id = fields.Many2one(
+        'afipws.caea',
+        string='Caea',
+    )
+
     def do_pyafipws_request_cae(self):
         caea_state = self.env['ir.config_parameter'].get_param('afip.ws.caea.state', 'inactive')
         _logger.info('caea_state %r' % caea_state)
@@ -43,11 +48,12 @@ class AccountMove(models.Model):
                         'afip_auth_code_due': inv.invoice_date,
                         'afip_result': '',
                         'afip_message': msg,
+                        'caea_id': active_caea.id
                     })
                     inv.message_post(body=msg)
                     continue
                 else:
-                    raise UserError(_('Company havent CAEA active'))
+                    raise UserError(_('The company does not have active CAEA'))
         elif caea_state == 'syncro':
             #to-do filter and raise}
             _logger.info('aca')

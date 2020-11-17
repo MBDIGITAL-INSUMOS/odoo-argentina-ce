@@ -32,6 +32,17 @@
                             <field name="date_from"/>
                             <field name="date_to"/>
                         </group>
+                        <group>
+                            <field name="move_ids">
+                                <tree  string="Pricelist Items">
+                                    <field name="name"/>
+                                    <field invisible="True" name="id"/>
+                                    <field name="type" invisible="context.get('default_type', True)"/>
+                                </tree>
+
+                            </field>
+                        
+                        </group>
                     </sheet>
                 </form>
             </field>

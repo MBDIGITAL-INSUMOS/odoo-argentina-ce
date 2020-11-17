@@ -487,16 +487,16 @@ class AccountMove(models.Model):
             msg = False
             try:
                 if afip_ws == 'wsfe':
-                    ws.CAESolicitar()
+                    afip_auth_code = ws.CAESolicitar()
                     vto = ws.Vencimiento
                 elif afip_ws == 'wsmtxca':
-                    ws.AutorizarComprobante()
+                    afip_auth_code = ws.AutorizarComprobante()
                     vto = ws.Vencimiento
                 elif afip_ws == 'wsfex':
-                    ws.Authorize(inv.id)
+                    afip_auth_code = ws.Authorize(inv.id)
                     vto = ws.FchVencCAE
                 elif afip_ws == 'wsbfe':
-                    ws.Authorize(inv.id)
+                    afip_auth_code =ws.Authorize(inv.id)
                     vto = ws.Vencimiento
             except SoapFault as fault:
                 msg = 'Falla SOAP %s: %s' % (
@@ -524,10 +524,15 @@ class AccountMove(models.Model):
             # escribe aca si no hay errores
             if vto:
                 vto = datetime.strptime(vto, '%Y%m%d').date()
-            _logger.info('CAE solicitado con exito. CAE: %s. Resultado %s' % (ws.CAE, ws.Resultado))
+            _logger.info('%s solicitado con exito. %s. Resultado %s' % (
+                ws.EmisionTipo,
+                afip_auth_code,
+                ws.Resultado)
+            )
+
             inv.write({
-                'afip_auth_mode': 'CAE',
-                'afip_auth_code': ws.CAE,
+                'afip_auth_mode': ws.EmisionTipo,
+                'afip_auth_code': afip_auth_code,
                 'afip_auth_code_due': vto,
                 'afip_result': ws.Resultado,
                 'afip_message': msg,

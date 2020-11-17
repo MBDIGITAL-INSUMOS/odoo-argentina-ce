@@ -50,6 +50,11 @@ class AfipwsCaea(models.Model):
         compute="_compute_date",
         store=True,
     )
+    move_ids = fields.One2many(
+        'account.move',
+        'caea_id',
+        string='Moves',
+    )
 
     @api.depends('name', 'order')
     def _compute_date(self):
@@ -82,7 +87,7 @@ class AfipwsCaea(models.Model):
         caea = ws.CAEAConsultar(values['name'], values['order'])
         # raise ValidationError(
         #        _('The Common Name must be lower than 50 characters long'))
-
+ 
         _logger.info(ws.ErrMsg)
         _logger.info(caea)
         if caea == '':
