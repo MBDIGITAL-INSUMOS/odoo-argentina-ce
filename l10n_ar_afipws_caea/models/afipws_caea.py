@@ -74,13 +74,14 @@ class AfipwsCaea(models.Model):
     @api.model
     def create(self, values):
 
-        exist = self.search([
+        """exist = self.search([
             ('company_id', '=', values['company_id']),
             ('name', '=', values['name']),
             ('order', '=', values['order'])
         ])
         if len(exist):
-            return
+            return"""
+
         company_id = self.env['res.company'].search(
             [('id', '=', values['company_id'])])
         ws = company_id.get_connection('wsfe').connect()
@@ -88,7 +89,7 @@ class AfipwsCaea(models.Model):
         # raise ValidationError(
         #        _('The Common Name must be lower than 50 characters long'))
 
-        _logger.info(ws.ErrMsg)
+        #_logger.info("ws.ErrMsg " % ws.ErrMsg)
         _logger.info(caea)
         if caea == '':
             caea = ws.CAEASolicitar(values['name'], values['order'])
@@ -98,7 +99,7 @@ class AfipwsCaea(models.Model):
         values['afip_caea'] = caea
         values['afip_observations'] = ws.Obs
 
-        return super(AfipwsCaea, self).create(values)
+        return super().create(values)
 
     def send_caea_invoices(self):
         self.env['ir.config_parameter'].set_param(
@@ -107,28 +108,31 @@ class AfipwsCaea(models.Model):
         move_ids = self.env['account.move'].search([
             ('afip_auth_mode', '=', 'CAEA'),
             ('afip_auth_code', '=', self.afip_caea)
-        ], order='id asc')
-        _logger.info(move_ids)
-
-        for inv in move_ids:
+        ], order='name asc')
+        out_invoice = move_ids.filtered(lambda i: i.type in ['out_invoice'])
+        out_refund = move_ids.filtered(lambda i: i.type in ['out_refund'])
+        for inv in out_invoice:
+            inv.do_pyafipws_request_cae()
+        for inv in out_refund:
             inv.do_pyafipws_request_cae()
 
     def cron_request_caea(self):
-        request_date = fields.Date.now() + relativedelta(days=7)
+        request_date = fields.Date.today() + relativedelta(days=7)
         period = request_date.strftime('%Y%m')
-        order = '1' if request_date.day() < 16 else '2'
+        order = '1' if request_date.day < 16 else '2'
 
-        company_ids = self.env['res.company'].search([('use_caea')])
+        company_ids = self.env['res.company'].search([('use_caea', '=', True)])
         for company_id in company_ids:
             caea = self.search([
-                ('period', '=', period),
+                ('name', '=', period),
                 ('order', '=', order),
                 ('company_id', '=', company_id.id),
             ])
 
             if not len(caea):
+
                 self.create({
-                    'period': period,
+                    'name': period,
                     'order': order,
                     'company_id': company_id.id
                 })
@@ -138,8 +142,8 @@ class AfipwsCaea(models.Model):
         self.env['ir.config_parameter'].set_param(
             'afip.ws.caea.state', 'inactive')
         caea_ids = self.search([
-            ('date_from', '>=',  fields.Date.now() + relativedelta(days=1)),
-            ('date_to', '<=',  fields.Date.now() + relativedelta(days=1))
+            ('date_from', '<=',  fields.Date.today() + relativedelta(days=1)),
+            ('date_to', '>=',  fields.Date.today() + relativedelta(days=1))
         ])
         caea_ids.send_caea_invoices()
 
@@ -147,8 +151,4 @@ class AfipwsCaea(models.Model):
         self.ensure_one()
         ws = self.company_id.get_connection('wsfe').connect()
         ws.Dummy()
-        msg = (
-            "AppServerStatus: %s DbServerStatus: %s AuthServerStatus: %s" % (
-                ws.AppServerStatus,
-                ws.DbServerStatus,
-                ws.AuthServerStatus))
+        return ws.AppServerStatus, ws.DbServerStatus, ws.AuthServerStatus

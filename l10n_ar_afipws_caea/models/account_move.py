@@ -11,6 +11,7 @@ class AccountMove(models.Model):
     caea_id = fields.Many2one(
         'afipws.caea',
         string='Caea',
+        copy=False
     )
 
     def post(self):
@@ -32,7 +33,7 @@ class AccountMove(models.Model):
         if caea_state == 'inactive':
             return super().do_pyafipws_request_cae()
         elif caea_state == 'active':
-            return super().do_pyafipws_request_caea()
+            return self.do_pyafipws_request_caea()
 
     def do_pyafipws_request_caea(self):
         for inv in self:

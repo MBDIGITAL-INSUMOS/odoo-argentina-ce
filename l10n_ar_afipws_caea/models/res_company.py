@@ -5,7 +5,7 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     use_caea = fields.Boolean(
-        string='Use Caea',
+        string='Request Caea autorization',
     )
 
     def get_active_caea(self):
@@ -16,4 +16,3 @@ class ResCompany(models.Model):
             ('date_from', '<=', today),
             ('date_to', '>=', today),
         ], limit=1)
-
