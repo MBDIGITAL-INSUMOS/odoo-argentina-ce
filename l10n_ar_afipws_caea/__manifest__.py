@@ -17,6 +17,7 @@
         'views/afipws_caea.xml',
         'views/company.xml',
         'views/res_config_settings.xml',
+        'views/pyafipws_dummy.xml',
         'data/ir_cron.xml'
     ],
     'demo': [

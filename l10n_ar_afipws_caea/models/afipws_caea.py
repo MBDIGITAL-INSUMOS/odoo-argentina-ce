@@ -146,9 +146,3 @@ class AfipwsCaea(models.Model):
             ('date_to', '>=',  fields.Date.today() + relativedelta(days=1))
         ])
         caea_ids.send_caea_invoices()
-
-    def test_pyafipws_dummy(self):
-        self.ensure_one()
-        ws = self.company_id.get_connection('wsfe').connect()
-        ws.Dummy()
-        return ws.AppServerStatus, ws.DbServerStatus, ws.AuthServerStatus

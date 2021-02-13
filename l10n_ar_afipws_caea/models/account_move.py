@@ -14,6 +14,13 @@ class AccountMove(models.Model):
         copy=False
     )
 
+    def get_pyafipws_last_invoice(self, document_type):
+        if self.journal_id.use_for_caea:
+            return self._l10n_ar_get_document_number_parts(self.l10n_latam_document_number,
+                                                           self.l10n_latam_document_type_id.code)['invoice_number']
+        else:
+            return super().get_pyafipws_last_invoice(document_type)
+
     def post(self):
         caea_state = self.env['ir.config_parameter'].get_param(
             'afip.ws.caea.state', 'inactive')
